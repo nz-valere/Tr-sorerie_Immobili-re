@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Plus, Search, MapPin, MoreVertical, Pencil, Trash2, Home, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -20,31 +20,38 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import AddBienDialog from "@/components/ui/add-bien-dialog"
 
 type Bien = {
   id: number
   name: string
   address: string
+  totalEntrees: number
+  totalSorties: number
+  solde: number
 }
 
 export default function BiensPage() {
   const [biens, setBiens] = useState<Bien[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
+  const [addDialogOpen, setAddDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedBien, setSelectedBien] = useState<number | null>(null)
   const [deleting, setDeleting] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
-  const fetchBiens = useCallback(async () => {
-    const token = localStorage.getItem("token")
-    const res = await fetch("/api/biens", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (res.ok) setBiens(await res.json())
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { fetchBiens() }, [fetchBiens])
+  useEffect(() => {
+    async function load() {
+      const token = localStorage.getItem("token")
+      const res = await fetch("/api/biens", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) setBiens(await res.json())
+      setLoading(false)
+    }
+    load()
+  }, [refreshKey])
 
   const filteredBiens = biens.filter(
     (bien) =>
@@ -68,7 +75,7 @@ export default function BiensPage() {
     setDeleting(false)
     setDeleteDialogOpen(false)
     setSelectedBien(null)
-    fetchBiens()
+    setRefreshKey(k => k + 1)
   }
 
   if (loading) {
@@ -89,11 +96,9 @@ export default function BiensPage() {
             Gérez vos biens et leur trésorerie
           </p>
         </div>
-        <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <Link href="/biens/nouveau">
-            <Plus className="w-4 h-4 mr-2" />
-            Ajouter un bien
-          </Link>
+        <Button onClick={() => setAddDialogOpen(true)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          <Plus className="w-4 h-4 mr-2" />
+          Ajouter un bien
         </Button>
       </div>
 
@@ -123,11 +128,12 @@ export default function BiensPage() {
                 : "Vous n'avez pas encore ajouté de bien. Commencez par en créer un."}
             </p>
             {!search && (
-              <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                <Link href="/biens/nouveau">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Ajouter mon premier bien
-                </Link>
+              <Button
+                onClick={() => setAddDialogOpen(true)}
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Ajouter mon premier bien
               </Button>
             )}
           </CardContent>
@@ -176,9 +182,30 @@ export default function BiensPage() {
                   <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
                     {bien.name}
                   </h3>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground mb-4">
                     <MapPin className="w-3.5 h-3.5 shrink-0" />
                     <span className="truncate">{bien.address}</span>
+                  </div>
+
+                  <div className="flex items-center gap-4 pt-3 border-t border-border">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Entrées</p>
+                      <p className="text-sm font-semibold text-chart-1">
+                        +{bien.totalEntrees.toLocaleString("fr-FR")} €
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Sorties</p>
+                      <p className="text-sm font-semibold text-chart-2">
+                        -{bien.totalSorties.toLocaleString("fr-FR")} €
+                      </p>
+                    </div>
+                    <div className="ml-auto">
+                      <p className="text-xs text-muted-foreground">Solde</p>
+                      <p className={`text-sm font-semibold ${bien.solde >= 0 ? "text-chart-1" : "text-chart-2"}`}>
+                        {bien.solde.toLocaleString("fr-FR")} €
+                      </p>
+                    </div>
                   </div>
                 </Link>
               </CardContent>
@@ -186,6 +213,13 @@ export default function BiensPage() {
           ))}
         </div>
       )}
+
+      {/* Add Bien Dialog */}
+      <AddBienDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onSuccess={() => setRefreshKey(k => k + 1)}
+      />
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

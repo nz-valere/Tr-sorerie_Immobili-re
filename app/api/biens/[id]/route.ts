@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { getPropertyById, updateProperty, deleteProperty } from '@/lib/propertyStore'
+import { deleteTransactionsByProperty } from '@/lib/transactionStore'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -48,6 +49,7 @@ export async function DELETE(req: NextRequest, { params }: Params) {
   if (!property) return NextResponse.json({ error: 'Bien introuvable' }, { status: 404 })
   if (property.user_id !== user.id) return NextResponse.json({ error: 'Interdit' }, { status: 403 })
 
+  await deleteTransactionsByProperty(Number(id))
   await deleteProperty(Number(id))
   return NextResponse.json({ ok: true })
 }

@@ -1,0 +1,212 @@
+[
+  {
+    "id": 1,
+    "property_id": 1,
+    "month": 1,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 2000,
+    "label": "Loyer janvier",
+    "category": "Loyer"
+  },
+  {
+    "id": 2,
+    "property_id": 1,
+    "month": 2,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 2000,
+    "label": "Loyer février",
+    "category": "Loyer"
+  },
+  {
+    "id": 3,
+    "property_id": 1,
+    "month": 3,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 2000,
+    "label": "Loyer mars",
+    "category": "Loyer"
+  },
+  {
+    "id": 4,
+    "property_id": 1,
+    "month": 1,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 800,
+    "label": "Charges copropriété",
+    "category": "Charges"
+  },
+  {
+    "id": 5,
+    "property_id": 1,
+    "month": 2,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 750,
+    "label": "Taxe foncière",
+    "category": "Taxes"
+  },
+  {
+    "id": 6,
+    "property_id": 1,
+    "month": 3,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 950,
+    "label": "Travaux peinture",
+    "category": "Travaux"
+  },
+  {
+    "id": 7,
+    "property_id": 2,
+    "month": 1,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 800,
+    "label": "Loyer janvier",
+    "category": "Loyer"
+  },
+  {
+    "id": 8,
+    "property_id": 2,
+    "month": 2,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 800,
+    "label": "Loyer février",
+    "category": "Loyer"
+  },
+  {
+    "id": 9,
+    "property_id": 2,
+    "month": 3,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 800,
+    "label": "Loyer mars",
+    "category": "Loyer"
+  },
+  {
+    "id": 10,
+    "property_id": 2,
+    "month": 1,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 320,
+    "label": "Charges",
+    "category": "Charges"
+  },
+  {
+    "id": 11,
+    "property_id": 2,
+    "month": 3,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 200,
+    "label": "Assurance",
+    "category": "Assurance"
+  },
+  {
+    "id": 12,
+    "property_id": 3,
+    "month": 1,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 1500,
+    "label": "Loyer janvier",
+    "category": "Loyer"
+  },
+  {
+    "id": 13,
+    "property_id": 3,
+    "month": 2,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 1500,
+    "label": "Loyer février",
+    "category": "Loyer"
+  },
+  {
+    "id": 14,
+    "property_id": 3,
+    "month": 3,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 1500,
+    "label": "Loyer mars",
+    "category": "Loyer"
+  },
+  {
+    "id": 15,
+    "property_id": 3,
+    "month": 2,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 680,
+    "label": "Taxe foncière",
+    "category": "Taxes"
+  },
+  {
+    "id": 16,
+    "property_id": 3,
+    "month": 3,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 400,
+    "label": "Assurance habitation",
+    "category": "Assurance"
+  },
+  {
+    "id": 17,
+    "property_id": 4,
+    "month": 1,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 1200,
+    "label": "Loyer janvier",
+    "category": "Loyer"
+  },
+  {
+    "id": 18,
+    "property_id": 4,
+    "month": 2,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 1200,
+    "label": "Loyer février",
+    "category": "Loyer"
+  },
+  {
+    "id": 19,
+    "property_id": 4,
+    "month": 3,
+    "year": 2026,
+    "type": "entrée",
+    "amount": 1200,
+    "label": "Loyer mars",
+    "category": "Loyer"
+  },
+  {
+    "id": 20,
+    "property_id": 4,
+    "month": 1,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 510,
+    "label": "Charges copropriété",
+    "category": "Charges"
+  },
+  {
+    "id": 21,
+    "property_id": 4,
+    "month": 2,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 300,
+    "label": "Réparation plomberie",
+    "category": "Travaux"
+  }
+]

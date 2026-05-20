@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
 import { getPropertiesByUser, createProperty } from '@/lib/propertyStore'
+import { getTotalsByProperty } from '@/lib/transactionStore'
 
 export async function GET(req: NextRequest) {
   const user = getUserFromRequest(req)
   if (!user) return NextResponse.json({ error: 'Non autorisé' }, { status: 401 })
 
   const properties = await getPropertiesByUser(user.id)
-  return NextResponse.json(properties)
+  const withTotals = await Promise.all(
+    properties.map(async (p) => ({ ...p, ...(await getTotalsByProperty(p.id)) }))
+  )
+  return NextResponse.json(withTotals)
 }
 
 export async function POST(req: NextRequest) {

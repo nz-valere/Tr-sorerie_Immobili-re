@@ -1,13 +1,13 @@
 # ValTreso — Suivi de trésorerie
 
-Application Next.js pour gérer des biens et suivre les entrées/sorties de trésorerie par période.
+Application Next.js full-stack pour gérer des biens et suivre les entrées/sorties de trésorerie par période.
 
 ## Démarrage rapide
 
 ### Prérequis
 
-- Node.js 20+ 
-- Un gestionnaire de paquets compatible avec le projet: `pnpm` recommandé, `npm` fonctionne aussi
+- Node.js 20+
+- `pnpm` recommandé (`npm` fonctionne aussi)
 
 ### Installation
 
@@ -15,21 +15,13 @@ Application Next.js pour gérer des biens et suivre les entrées/sorties de tré
 pnpm install
 ```
 
-Si vous préférez `npm`, utilisez:
-
-```bash
-npm install
-```
-
 ### Variables d'environnement
 
-Créer un fichier `.env` à la racine avec au minimum:
+Créer un fichier `.env` à la racine :
 
 ```bash
 JWT_SECRET=change-this-to-a-long-random-value
 ```
-
-Un exemple est disponible dans [.env.example](.env.example).
 
 ### Lancer le projet
 
@@ -39,73 +31,105 @@ pnpm dev
 
 Puis ouvrir http://localhost:3000.
 
-## Ce qui est déjà en place
+---
 
-- Authentification: inscription / connexion
-- Pages dédiées: [/register](app/register/page.tsx) et [/login](app/login/page.tsx)
-- API d'authentification: `/api/auth/register` et `/api/auth/login`
-- Stockage de développement: `data/users.json`
+## Ce qui est en place
 
-## API d'authentification
+### Authentification
+- Inscription (`/register`) et connexion (`/login`)
+- Hash des mots de passe avec `bcryptjs`
+- Token JWT stocké dans `localStorage` (7 jours)
+- Redirection post-inscription → `/login`, post-connexion → `/biens`
+- Déconnexion avec nettoyage du `localStorage`
 
-### Inscription
+### Dashboard
+- Sidebar avec navigation et infos utilisateur dynamiques
+- Layout responsive (sidebar desktop, menu mobile)
 
-`POST /api/auth/register`
+### Gestion des biens
+- Lister, créer, supprimer un bien via popup
+- Totaux entrées / sorties / solde calculés depuis les transactions
+- Recherche en temps réel
 
-Body JSON:
+---
 
-```json
-{
-	"name": "Alice",
-	"email": "a@ex.com",
-	"password": "secret"
-}
+## API
+
+### Auth
+
+| Méthode | Route | Description |
+|---|---|---|
+| `POST` | `/api/auth/register` | Inscription `{ name, email, password }` |
+| `POST` | `/api/auth/login` | Connexion `{ email, password }` → `{ token, user }` |
+
+### Biens *(Authorization: Bearer `<token>` requis)*
+
+| Méthode | Route | Description |
+|---|---|---|
+| `GET` | `/api/biens` | Liste des biens avec totaux |
+| `POST` | `/api/biens` | Créer un bien `{ name, address }` |
+| `GET` | `/api/biens/:id` | Détail d'un bien |
+| `PUT` | `/api/biens/:id` | Modifier `{ name, address }` |
+| `DELETE` | `/api/biens/:id` | Supprimer (supprime aussi les transactions liées) |
+
+---
+
+## Architecture
+
+```
+app/
+├── (auth)/
+│   ├── login/page.tsx
+│   └── register/page.tsx
+├── (dashboard)/
+│   ├── layout.tsx          # Sidebar + navbar
+│   └── biens/
+│       ├── page.tsx        # Liste des biens
+│       └── [id]/
+│           ├── page.tsx
+│           └── modifier/page.tsx
+├── api/
+│   ├── auth/
+│   │   ├── register/route.ts
+│   │   └── login/route.ts
+│   └── biens/
+│       ├── route.ts
+│       └── [id]/route.ts
+├── not-found.tsx
+└── page.tsx                # Landing page
+
+lib/
+├── auth.ts                 # Vérification JWT
+├── userStore.ts            # CRUD utilisateurs
+├── propertyStore.ts        # CRUD biens
+└── transactionStore.ts     # CRUD transactions + calcul totaux
+
+data/
+├── users.json
+├── properties.json
+└── transactions.json
 ```
 
-Réponse: l'utilisateur créé, sans le hash du mot de passe.
+---
 
-### Connexion
+## Modèles de données
 
-`POST /api/auth/login`
-
-Body JSON:
-
-```json
-{
-	"email": "a@ex.com",
-	"password": "secret"
-}
+```ts
+User        { id, name, email, passwordHash }
+Property    { id, user_id, name, address }
+Transaction { id, property_id, month, year, type: "entrée"|"sortie", amount, label, category }
 ```
 
-Réponse:
-
-```json
-{
-	"ok": true,
-	"token": "<JWT>",
-	"user": {
-		"id": 1,
-		"name": "Alice",
-		"email": "a@ex.com"
-	}
-}
-```
-
-## Architecture actuelle
-
-- [app/api/auth/register/route.ts](app/api/auth/register/route.ts)
-- [app/api/auth/login/route.ts](app/api/auth/login/route.ts)
-- [lib/userStore.ts](lib/userStore.ts)
+---
 
 ## Notes techniques
 
-Pour l’instant, les utilisateurs sont stockés dans `data/users.json`. C’est suffisant pour prototyper, mais il faudra migrer vers SQLite ou Postgres avec Prisma pour une version fiable en production.
+Le stockage JSON est suffisant pour prototyper. Pour la production, migrer vers PostgreSQL ou SQLite avec Prisma.
 
 ## Prochaines étapes
 
-1. Ajouter des sessions serveur avec cookies HTTPOnly.
-2. Remplacer le stockage JSON par une vraie base de données.
-3. Créer les modèles `Property` et `Transaction`.
-4. Construire le dashboard principal.
-
-
+1. Implémenter le détail d'un bien avec tableau mensuel des transactions.
+2. Ajouter / modifier / supprimer des transactions.
+3. Graphiques d'évolution (Recharts ou Chart.js).
+4. Sessions serveur avec cookies HTTPOnly.
+5. Migration vers une vraie base de données.

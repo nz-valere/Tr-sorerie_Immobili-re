@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": 1,
+    "user_id": 1,
+    "name": "Appartement Haussmannien",
+    "address": "24 Avenue des Champs-Élysées, 75008 Paris"
+  },
+  {
+    "id": 2,
+    "user_id": 1,
+    "name": "Studio Marais",
+    "address": "15 Rue de Bretagne, 75003 Paris"
+  },
+  {
+    "id": 3,
+    "user_id": 1,
+    "name": "Maison Bordeaux",
+    "address": "42 Rue Sainte-Catherine, 33000 Bordeaux"
+  },
+  {
+    "id": 4,
+    "user_id": 1,
+    "name": "T3 Lyon",
+    "address": "8 Place Bellecour, 69002 Lyon"
+  }
+]

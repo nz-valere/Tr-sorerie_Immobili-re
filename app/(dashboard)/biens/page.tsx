@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { Plus, Search, MapPin, MoreVertical, Pencil, Trash2, Home } from "lucide-react"
+import { Plus, Search, MapPin, MoreVertical, Pencil, Trash2, Home, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -21,52 +21,62 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 
-// Données fictives pour le design
-const mockBiens = [
-  {
-    id: "1",
-    nom: "Appartement Haussmannien",
-    adresse: "24 Avenue des Champs-Élysées, 75008 Paris",
-    totalEntrees: 24000,
-    totalSorties: 8500,
-  },
-  {
-    id: "2",
-    nom: "Studio Marais",
-    adresse: "15 Rue de Bretagne, 75003 Paris",
-    totalEntrees: 9600,
-    totalSorties: 3200,
-  },
-  {
-    id: "3",
-    nom: "Maison Bordeaux",
-    adresse: "42 Rue Sainte-Catherine, 33000 Bordeaux",
-    totalEntrees: 18000,
-    totalSorties: 6800,
-  },
-  {
-    id: "4",
-    nom: "T3 Lyon",
-    adresse: "8 Place Bellecour, 69002 Lyon",
-    totalEntrees: 14400,
-    totalSorties: 5100,
-  },
-]
+type Bien = {
+  id: number
+  name: string
+  address: string
+}
 
 export default function BiensPage() {
+  const [biens, setBiens] = useState<Bien[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedBien, setSelectedBien] = useState<string | null>(null)
+  const [selectedBien, setSelectedBien] = useState<number | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
-  const filteredBiens = mockBiens.filter(
+  const fetchBiens = useCallback(async () => {
+    const token = localStorage.getItem("token")
+    const res = await fetch("/api/biens", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (res.ok) setBiens(await res.json())
+    setLoading(false)
+  }, [])
+
+  useEffect(() => { fetchBiens() }, [fetchBiens])
+
+  const filteredBiens = biens.filter(
     (bien) =>
-      bien.nom.toLowerCase().includes(search.toLowerCase()) ||
-      bien.adresse.toLowerCase().includes(search.toLowerCase())
+      bien.name.toLowerCase().includes(search.toLowerCase()) ||
+      bien.address.toLowerCase().includes(search.toLowerCase())
   )
 
-  const handleDeleteClick = (id: string) => {
+  const handleDeleteClick = (id: number) => {
     setSelectedBien(id)
     setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedBien) return
+    setDeleting(true)
+    const token = localStorage.getItem("token")
+    await fetch(`/api/biens/${selectedBien}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    setDeleting(false)
+    setDeleteDialogOpen(false)
+    setSelectedBien(null)
+    fetchBiens()
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   return (
@@ -76,7 +86,7 @@ export default function BiensPage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Mes biens</h1>
           <p className="text-muted-foreground mt-1">
-            Gérez vos biens immobiliers et leur trésorerie
+            Gérez vos biens et leur trésorerie
           </p>
         </div>
         <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -164,38 +174,11 @@ export default function BiensPage() {
 
                 <Link href={`/biens/${bien.id}`} className="block">
                   <h3 className="font-semibold text-foreground mb-1 group-hover:text-primary transition-colors">
-                    {bien.nom}
+                    {bien.name}
                   </h3>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground mb-4">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span className="truncate">{bien.adresse}</span>
-                  </div>
-
-                  <div className="flex items-center gap-4 pt-3 border-t border-border">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Entrées</p>
-                      <p className="text-sm font-semibold text-chart-1">
-                        +{bien.totalEntrees.toLocaleString("fr-FR")} €
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Sorties</p>
-                      <p className="text-sm font-semibold text-chart-2">
-                        -{bien.totalSorties.toLocaleString("fr-FR")} €
-                      </p>
-                    </div>
-                    <div className="ml-auto">
-                      <p className="text-xs text-muted-foreground">Solde</p>
-                      <p
-                        className={`text-sm font-semibold ${
-                          bien.totalEntrees - bien.totalSorties >= 0
-                            ? "text-chart-1"
-                            : "text-chart-2"
-                        }`}
-                      >
-                        {(bien.totalEntrees - bien.totalSorties).toLocaleString("fr-FR")} €
-                      </p>
-                    </div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <MapPin className="w-3.5 h-3.5 shrink-0" />
+                    <span className="truncate">{bien.address}</span>
                   </div>
                 </Link>
               </CardContent>
@@ -219,18 +202,12 @@ export default function BiensPage() {
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
               className="border-border text-foreground"
+              disabled={deleting}
             >
               Annuler
             </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                // Pas de logique - juste le design
-                setDeleteDialogOpen(false)
-                setSelectedBien(null)
-              }}
-            >
-              Supprimer
+            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
+              {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Supprimer"}
             </Button>
           </DialogFooter>
         </DialogContent>

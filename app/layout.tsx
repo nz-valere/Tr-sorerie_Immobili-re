@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'ValTreso - Suivi de Trésorerie',
+  title: 'ImmoTreso Suivi de Trésorerie',
   description: 'Application de gestion et suivi de trésorerie pour vos biens',
   generator: 'v0.app',
   icons: {

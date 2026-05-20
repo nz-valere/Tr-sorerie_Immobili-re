@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Building2, Eye, EyeOff, Mail, Lock, User, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default function RegisterPage() {
+  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [name, setName] = useState("")
@@ -16,7 +18,6 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,11 +50,7 @@ export default function RegisterPage() {
       const data = await res.json()
 
       if (res.ok) {
-        setSuccess("Inscription réussie — vous pouvez vous connecter.")
-        setName("")
-        setEmail("")
-        setPassword("")
-        setConfirmPassword("")
+        router.push("/login")
       } else {
         setError(data.error || "Erreur lors de l'inscription")
       }
@@ -72,7 +69,7 @@ export default function RegisterPage() {
           <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
             <Building2 className="w-7 h-7 text-primary" />
           </div>
-          <span className="text-2xl font-bold text-foreground">ImmoTreso</span>
+          <span className="text-2xl font-bold text-foreground">ValTreso</span>
         </div>
 
         <Card className="border-border bg-card">
@@ -87,12 +84,6 @@ export default function RegisterPage() {
               {error && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                   {error}
-                </div>
-              )}
-
-              {success && (
-                <div className="p-3 rounded-lg bg-green-500/10 border border-green-500/20 text-green-600 dark:text-green-400 text-sm">
-                  {success}
                 </div>
               )}
 

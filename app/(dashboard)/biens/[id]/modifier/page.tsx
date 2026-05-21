@@ -24,7 +24,10 @@ export default function ModifierBienPage() {
   useEffect(() => {
     const fetchBien = async () => {
       try {
-        const res = await fetch(`/api/biens/${id}`)
+        const token = localStorage.getItem("token")
+        const res = await fetch(`/api/biens/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         if (!res.ok) throw new Error("Bien introuvable")
         const data = await res.json()
         setNom(data.name)
@@ -45,9 +48,13 @@ export default function ModifierBienPage() {
     setError(null)
 
     try {
+      const token = localStorage.getItem("token")
       const res = await fetch(`/api/biens/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ name, address }),
       })
       if (!res.ok) {

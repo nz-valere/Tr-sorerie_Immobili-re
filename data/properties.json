@@ -28,5 +28,11 @@
     "user_id": 1,
     "name": "laHess",
     "address": "Cachan, Île-de-France, France"
+  },
+  {
+    "id": 6,
+    "user_id": 1,
+    "name": "hello world",
+    "address": "bastos"
   }
 ]

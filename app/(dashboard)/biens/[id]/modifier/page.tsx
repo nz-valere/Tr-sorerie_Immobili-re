@@ -1,31 +1,81 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ArrowLeft, Home, MapPin } from "lucide-react"
+import { ArrowLeft, Home, MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-// Données fictives pour le design
-const mockBien = {
-  id: "1",
-  nom: "Appartement Haussmannien",
-  adresse: "24 Avenue des Champs-Élysées, 75008 Paris",
-}
-
 export default function ModifierBienPage() {
-  const [nom, setNom] = useState(mockBien.nom)
-  const [adresse, setAdresse] = useState(mockBien.adresse)
+  const params = useParams()
+  const router = useRouter()
+  const id = params.id as string
+
+  const [name, setNom] = useState("")
+  const [address, setAdresse] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Pas de logique - juste le design
-    if (nom && adresse) {
-      setSuccess(true)
+  useEffect(() => {
+    const fetchBien = async () => {
+      try {
+        const res = await fetch(`/api/biens/${id}`)
+        if (!res.ok) throw new Error("Bien introuvable")
+        const data = await res.json()
+        setNom(data.name)
+        setAdresse(data.address)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
     }
+
+    fetchBien()
+  }, [id])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSaving(true)
+    setError(null)
+
+    try {
+      const res = await fetch(`/api/biens/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, address }),
+      })
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || "Erreur lors de la mise à jour")
+      }
+      setSuccess(true)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4 lg:p-8 flex items-center justify-center min-h-[300px]">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error && !name) {
+    return (
+      <div className="p-4 lg:p-8">
+        <p className="text-destructive">{error}</p>
+      </div>
+    )
   }
 
   if (success) {
@@ -48,7 +98,7 @@ export default function ModifierBienPage() {
                   <Link href="/biens">Retour à la liste</Link>
                 </Button>
                 <Button asChild className="bg-primary text-primary-foreground hover:bg-primary/90">
-                  <Link href={`/biens/${mockBien.id}`}>Voir le bien</Link>
+                  <Link href={`/biens/${id}`}>Voir le bien</Link>
                 </Button>
               </div>
             </CardContent>
@@ -67,7 +117,7 @@ export default function ModifierBienPage() {
           asChild
           className="mb-4 text-muted-foreground hover:text-foreground"
         >
-          <Link href={`/biens/${mockBien.id}`}>
+          <Link href={`/biens/${id}`}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Retour
           </Link>
@@ -98,7 +148,7 @@ export default function ModifierBienPage() {
                     id="nom"
                     type="text"
                     placeholder="Ex: Appartement Haussmannien"
-                    value={nom}
+                    value={name}
                     onChange={(e) => setNom(e.target.value)}
                     className="pl-10 bg-input border-border text-foreground placeholder:text-muted-foreground"
                   />
@@ -115,12 +165,16 @@ export default function ModifierBienPage() {
                     id="adresse"
                     type="text"
                     placeholder="Ex: 24 Avenue des Champs-Élysées, 75008 Paris"
-                    value={adresse}
+                    value={address}
                     onChange={(e) => setAdresse(e.target.value)}
                     className="pl-10 bg-input border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
+
+              {error && (
+                <p className="text-sm text-destructive">{error}</p>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <Button
@@ -129,13 +183,14 @@ export default function ModifierBienPage() {
                   asChild
                   className="flex-1 border-border text-foreground"
                 >
-                  <Link href={`/biens/${mockBien.id}`}>Annuler</Link>
+                  <Link href={`/biens/${id}`}>Annuler</Link>
                 </Button>
                 <Button
                   type="submit"
                   className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
-                  disabled={!nom || !adresse}
+                  disabled={!name || !address || saving}
                 >
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                   Enregistrer
                 </Button>
               </div>

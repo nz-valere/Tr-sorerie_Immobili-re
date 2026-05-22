@@ -34,5 +34,11 @@
     "user_id": 1,
     "name": "hello wrld",
     "address": "bastos"
+  },
+  {
+    "id": 7,
+    "user_id": 1,
+    "name": "orca",
+    "address": "omnisport"
   }
 ]

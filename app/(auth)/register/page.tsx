@@ -95,7 +95,7 @@ export default function RegisterPage() {
                   <Input
                     id="name"
                     type="text"
-                    placeholder="Jean Dupont"
+                    placeholder="Jean Jean Francois"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className="pl-10 bg-input border-border text-foreground placeholder:text-muted-foreground"

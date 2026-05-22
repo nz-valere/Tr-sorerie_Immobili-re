@@ -150,11 +150,11 @@ export default function DashboardPage() {
                 <div className="h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={data.monthlyData} margin={{ top: 20, right: 20, left: 0, bottom: 5 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="mois" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={{ stroke: "hsl(var(--border))" }} />
-                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} axisLine={{ stroke: "hsl(var(--border))" }} tickFormatter={(v) => `${v / 1000}k`} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                      <XAxis dataKey="mois" tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} axisLine={{ stroke: "var(--border)" }} />
+                      <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} axisLine={{ stroke: "var(--border)" }} tickFormatter={(v) => `${v / 1000}k`} />
                       <Tooltip
-                        contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }}
+                        contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)" }}
                         formatter={(value: number, name: string) => [`${value.toLocaleString("fr-FR")} €`, name === "entrees" ? "Entrées" : "Sorties"]}
                       />
                       <Bar dataKey="entrees" fill="#10b981" radius={[4, 4, 0, 0]} name="Entrées" />
@@ -176,10 +176,10 @@ export default function DashboardPage() {
                     <PieChart>
                       <Pie data={data.categoriesSorties} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value"
                         label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
+                        labelLine={{ stroke: "var(--muted-foreground)" }}>
                         {data.categoriesSorties.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                       </Pie>
-                      <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }}
+                      <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)" }}
                         formatter={(value: number) => [`${value.toLocaleString("fr-FR")} €`]} />
                     </PieChart>
                   </ResponsiveContainer>
@@ -199,12 +199,12 @@ export default function DashboardPage() {
                   <PieChart>
                     <Pie data={data.categoriesEntrees} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value"
                       label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                      labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
+                      labelLine={{ stroke: "var(--muted-foreground)" }}>
                       {data.categoriesEntrees.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
-                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }}
+                    <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)" }}
                       formatter={(value: number) => [`${value.toLocaleString("fr-FR")} €`]} />
-                    <Legend formatter={(value) => <span style={{ color: "hsl(var(--foreground))" }}>{value}</span>} />
+                    <Legend formatter={(value) => <span style={{ color: "var(--foreground)" }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>

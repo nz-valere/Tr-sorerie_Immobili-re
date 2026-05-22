@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
-import { getPropertiesByUser, createProperty } from '@/lib/propertyStore'
+import { getPropertiesByUser, createProperty, type Property } from '@/lib/propertyStore'
 import { getTotalsByProperty } from '@/lib/transactionStore'
 
 export async function GET(req: NextRequest) {
@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
 
   const properties = await getPropertiesByUser(user.id)
   const withTotals = await Promise.all(
-    properties.map(async (p) => ({ ...p, ...(await getTotalsByProperty(p.id)) }))
+    properties.map(async (p: Property) => ({ ...p, ...(await getTotalsByProperty(p.id)) }))
   )
   return NextResponse.json(withTotals)
 }

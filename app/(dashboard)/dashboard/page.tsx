@@ -157,8 +157,8 @@ export default function DashboardPage() {
                         contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", color: "hsl(var(--foreground))" }}
                         formatter={(value: number, name: string) => [`${value.toLocaleString("fr-FR")} €`, name === "entrees" ? "Entrées" : "Sorties"]}
                       />
-                      <Bar dataKey="entrees" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} name="Entrées" />
-                      <Bar dataKey="sorties" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} name="Sorties" />
+                      <Bar dataKey="entrees" fill="#10b981" radius={[4, 4, 0, 0]} name="Entrées" />
+                      <Bar dataKey="sorties" fill="#f97316" radius={[4, 4, 0, 0]} name="Sorties" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

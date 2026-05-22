@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   allTransactions.filter(t => t.type === 'sortie').forEach(t => {
     sortiesMap[t.category] = (sortiesMap[t.category] || 0) + t.amount
   })
-  const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))', 'hsl(var(--chart-5))']
+  const COLORS = ['#10b981', '#f97316', '#3b82f6', '#a855f7', '#f59e0b']
   const categoriesSorties = Object.entries(sortiesMap).map(([name, value], i) => ({
     name, value, color: COLORS[i % COLORS.length]
   }))

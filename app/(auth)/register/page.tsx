@@ -23,7 +23,6 @@ export default function RegisterPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
-    setSuccess("")
 
     if (!name || !email || !password || !confirmPassword) {
       setError("Veuillez remplir tous les champs")

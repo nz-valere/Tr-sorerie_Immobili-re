@@ -155,7 +155,7 @@ export default function DashboardPage() {
                       <YAxis tick={{ fill: "var(--muted-foreground)", fontSize: 12 }} axisLine={{ stroke: "var(--border)" }} tickFormatter={(v) => `${v / 1000}k`} />
                       <Tooltip
                         contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)" }}
-                        formatter={(value: number, name: string) => [`${value.toLocaleString("fr-FR")} €`, name === "entrees" ? "Entrées" : "Sorties"]}
+                        formatter={(value, name) => [`${Number(value ?? 0).toLocaleString("fr-FR")} €`, name === "entrees" ? "Entrées" : "Sorties"]}
                       />
                       <Bar dataKey="entrees" fill="#10b981" radius={[4, 4, 0, 0]} name="Entrées" />
                       <Bar dataKey="sorties" fill="#f97316" radius={[4, 4, 0, 0]} name="Sorties" />
@@ -175,12 +175,12 @@ export default function DashboardPage() {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie data={data.categoriesSorties} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                         labelLine={{ stroke: "var(--muted-foreground)" }}>
                         {data.categoriesSorties.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                       </Pie>
                       <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)" }}
-                        formatter={(value: number) => [`${value.toLocaleString("fr-FR")} €`]} />
+                        formatter={(value) => [`${Number(value ?? 0).toLocaleString("fr-FR")} €`]} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
@@ -198,12 +198,12 @@ export default function DashboardPage() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie data={data.categoriesEntrees} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={2} dataKey="value"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                       labelLine={{ stroke: "var(--muted-foreground)" }}>
                       {data.categoriesEntrees.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip contentStyle={{ backgroundColor: "var(--card)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--foreground)" }}
-                      formatter={(value: number) => [`${value.toLocaleString("fr-FR")} €`]} />
+                      formatter={(value) => [`${Number(value ?? 0).toLocaleString("fr-FR")} €`]} />
                     <Legend formatter={(value) => <span style={{ color: "var(--foreground)" }}>{value}</span>} />
                   </PieChart>
                 </ResponsiveContainer>

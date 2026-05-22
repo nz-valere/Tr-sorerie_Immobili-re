@@ -798,5 +798,35 @@
     "amount": 580,
     "label": "Taxe foncière",
     "category": "Taxe foncière"
+  },
+  {
+    "id": 81,
+    "property_id": 2,
+    "month": 1,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 2000,
+    "label": "hello wrld",
+    "category": "googgggf"
+  },
+  {
+    "id": 82,
+    "property_id": 2,
+    "month": 6,
+    "year": 2026,
+    "type": "sortie",
+    "amount": 15,
+    "label": "cynthia",
+    "category": "qwerty"
+  },
+  {
+    "id": 83,
+    "property_id": 2,
+    "month": 1,
+    "year": 2023,
+    "type": "entrée",
+    "amount": 13,
+    "label": "qwqw",
+    "category": "qwqw"
   }
 ]

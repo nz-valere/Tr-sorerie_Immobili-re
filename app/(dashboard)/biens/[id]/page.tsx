@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useParams } from "next/navigation"
 import Link from "next/link"
 import {
   ArrowLeft,
@@ -12,6 +13,7 @@ import {
   TrendingUp,
   TrendingDown,
   Calendar,
+  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -30,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-
 import {
   Dialog,
   DialogContent,
@@ -41,93 +42,191 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
-// Données fictives pour le design
-const mockBien = {
-  id: "1",
-  nom: "Appartement Haussmannien",
-  adresse: "24 Avenue des Champs-Élysées, 75008 Paris",
-}
 
 const mois = [
-  "Janvier",
-  "Février",
-  "Mars",
-  "Avril",
-  "Mai",
-  "Juin",
-  "Juillet",
-  "Août",
-  "Septembre",
-  "Octobre",
-  "Novembre",
-  "Décembre",
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
 ]
 
-const mockTransactions = [
-  { mois: 0, type: "entree", montant: 2000, libelle: "Loyer" },
-  { mois: 0, type: "sortie", montant: 150, libelle: "Charges copropriété" },
-  { mois: 1, type: "entree", montant: 2000, libelle: "Loyer" },
-  { mois: 1, type: "sortie", montant: 150, libelle: "Charges copropriété" },
-  { mois: 1, type: "sortie", montant: 320, libelle: "Réparation plomberie" },
-  { mois: 2, type: "entree", montant: 2000, libelle: "Loyer" },
-  { mois: 2, type: "sortie", montant: 150, libelle: "Charges copropriété" },
-  { mois: 3, type: "entree", montant: 2000, libelle: "Loyer" },
-  { mois: 3, type: "sortie", montant: 150, libelle: "Charges copropriété" },
-  { mois: 3, type: "sortie", montant: 1200, libelle: "Taxe foncière" },
-  { mois: 4, type: "entree", montant: 2000, libelle: "Loyer" },
-  { mois: 4, type: "sortie", montant: 150, libelle: "Charges copropriété" },
-  { mois: 5, type: "entree", montant: 2000, libelle: "Loyer" },
-  { mois: 5, type: "sortie", montant: 150, libelle: "Charges copropriété" },
-]
+type TransactionType = "entrée" | "sortie"
 
-type TransactionType = "entree" | "sortie"
+type Transaction = {
+  id: number
+  property_id: number
+  month: number
+  year: number
+  type: TransactionType
+  amount: number
+  label: string
+  category: string
+}
+
+type Bien = {
+  id: number
+  name: string
+  address: string
+}
 
 export default function BienDetailPage() {
-  const [selectedYear, setSelectedYear] = useState("2024")
-  const [addTransactionOpen, setAddTransactionOpen] = useState(false)
-  const [editTransactionOpen, setEditTransactionOpen] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [transactionType, setTransactionType] = useState<TransactionType>("entree")
-  const [selectedMois, setSelectedMois] = useState("0")
-  const [montant, setMontant] = useState("")
-  const [libelle, setLibelle] = useState("")
+  const params = useParams()
+  const id = params.id as string
 
+  const [bien, setBien] = useState<Bien | null>(null)
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  const [selectedYear, setSelectedYear] = useState(String(new Date().getFullYear()))
   const years = ["2022", "2023", "2024", "2025", "2026"]
 
-  // Calcul des totaux par mois
+  const [addOpen, setAddOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  const [formType, setFormType] = useState<TransactionType>("entrée")
+  const [formMois, setFormMois] = useState("1")
+  const [formMontant, setFormMontant] = useState("")
+  const [formLibelle, setFormLibelle] = useState("")
+  const [formCategory, setFormCategory] = useState("")
+
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
+
+  const fetchData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [bienRes, txRes] = await Promise.all([
+        fetch(`/api/biens/${id}`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`/api/biens/${id}/transactions?year=${selectedYear}`, { headers: { Authorization: `Bearer ${token}` } }),
+      ])
+      if (!bienRes.ok) throw new Error("Bien introuvable")
+      const [bienData, txData] = await Promise.all([bienRes.json(), txRes.json()])
+      setBien(bienData)
+      setTransactions(txData)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+    }
+  }, [id, selectedYear, token])
+
+  useEffect(() => { fetchData() }, [fetchData])
+
   const getMonthData = (monthIndex: number) => {
-    const monthTransactions = mockTransactions.filter((t) => t.mois === monthIndex)
-    const entrees = monthTransactions
-      .filter((t) => t.type === "entree")
-      .reduce((sum, t) => sum + t.montant, 0)
-    const sorties = monthTransactions
-      .filter((t) => t.type === "sortie")
-      .reduce((sum, t) => sum + t.montant, 0)
-    return { entrees, sorties, solde: entrees - sorties, transactions: monthTransactions }
+    const monthTx = transactions.filter(t => t.month === monthIndex + 1)
+    const entrees = monthTx.filter(t => t.type === "entrée").reduce((s, t) => s + t.amount, 0)
+    const sorties = monthTx.filter(t => t.type === "sortie").reduce((s, t) => s + t.amount, 0)
+    return { entrees, sorties, solde: entrees - sorties, transactions: monthTx }
   }
 
-  // Totaux annuels
-  const totalEntrees = mockTransactions
-    .filter((t) => t.type === "entree")
-    .reduce((sum, t) => sum + t.montant, 0)
-  const totalSorties = mockTransactions
-    .filter((t) => t.type === "sortie")
-    .reduce((sum, t) => sum + t.montant, 0)
+  const totalEntrees = transactions.filter(t => t.type === "entrée").reduce((s, t) => s + t.amount, 0)
+  const totalSorties = transactions.filter(t => t.type === "sortie").reduce((s, t) => s + t.amount, 0)
   const totalSolde = totalEntrees - totalSorties
 
-  const handleAddTransaction = () => {
-    setTransactionType("entree")
-    setSelectedMois("0")
-    setMontant("")
-    setLibelle("")
-    setAddTransactionOpen(true)
+  const handleAdd = () => {
+    setFormType("entrée")
+    setFormMois("1")
+    setFormMontant("")
+    setFormLibelle("")
+    setFormCategory("")
+    setAddOpen(true)
+  }
+
+  const handleEdit = (tx: Transaction) => {
+    setSelectedTx(tx)
+    setFormMontant(String(tx.amount))
+    setFormLibelle(tx.label)
+    setFormCategory(tx.category)
+    setEditOpen(true)
+  }
+
+  const handleDeleteClick = (tx: Transaction) => {
+    setSelectedTx(tx)
+    setDeleteOpen(true)
+  }
+
+  const submitAdd = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/biens/${id}/transactions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          month: Number(formMois),
+          year: Number(selectedYear),
+          type: formType,
+          amount: Number(formMontant),
+          label: formLibelle,
+          category: formCategory || formLibelle,
+        }),
+      })
+      if (!res.ok) throw new Error("Erreur lors de l'ajout")
+      setAddOpen(false)
+      await fetchData()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const submitEdit = async () => {
+    if (!selectedTx) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/biens/${id}/transactions/${selectedTx.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          amount: Number(formMontant),
+          label: formLibelle,
+          category: formCategory || formLibelle,
+        }),
+      })
+      if (!res.ok) throw new Error("Erreur lors de la modification")
+      setEditOpen(false)
+      await fetchData()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const submitDelete = async () => {
+    if (!selectedTx) return
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/biens/${id}/transactions/${selectedTx.id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (!res.ok) throw new Error("Erreur lors de la suppression")
+      setDeleteOpen(false)
+      await fetchData()
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="p-4 lg:p-8 flex items-center justify-center min-h-[300px]">
+        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (error || !bien) {
+    return (
+      <div className="p-4 lg:p-8">
+        <p className="text-destructive">{error ?? "Bien introuvable"}</p>
+      </div>
+    )
   }
 
   return (
@@ -147,16 +246,16 @@ export default function BienDetailPage() {
               <Home className="w-6 h-6 text-primary" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">{mockBien.nom}</h1>
+              <h1 className="text-2xl font-bold text-foreground">{bien.name}</h1>
               <div className="flex items-center gap-1 text-muted-foreground mt-1">
                 <MapPin className="w-4 h-4" />
-                <span>{mockBien.adresse}</span>
+                <span>{bien.address}</span>
               </div>
             </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" asChild className="border-border text-foreground">
-              <Link href={`/biens/${mockBien.id}/modifier`}>
+              <Link href={`/biens/${id}/modifier`}>
                 <Pencil className="w-4 h-4 mr-2" />
                 Modifier
               </Link>
@@ -175,9 +274,7 @@ export default function BienDetailPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total entrées</p>
-                <p className="text-xl font-bold text-chart-1">
-                  +{totalEntrees.toLocaleString("fr-FR")} €
-                </p>
+                <p className="text-xl font-bold text-chart-1">+{totalEntrees.toLocaleString("fr-FR")} €</p>
               </div>
             </div>
           </CardContent>
@@ -191,9 +288,7 @@ export default function BienDetailPage() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Total sorties</p>
-                <p className="text-xl font-bold text-chart-2">
-                  -{totalSorties.toLocaleString("fr-FR")} €
-                </p>
+                <p className="text-xl font-bold text-chart-2">-{totalSorties.toLocaleString("fr-FR")} €</p>
               </div>
             </div>
           </CardContent>
@@ -202,24 +297,15 @@ export default function BienDetailPage() {
         <Card className="border-border bg-card">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <div
-                className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                  totalSolde >= 0 ? "bg-chart-1/10" : "bg-chart-2/10"
-                }`}
-              >
-                {totalSolde >= 0 ? (
-                  <TrendingUp className="w-5 h-5 text-chart-1" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-chart-2" />
-                )}
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${totalSolde >= 0 ? "bg-chart-1/10" : "bg-chart-2/10"}`}>
+                {totalSolde >= 0
+                  ? <TrendingUp className="w-5 h-5 text-chart-1" />
+                  : <TrendingDown className="w-5 h-5 text-chart-2" />}
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Solde net</p>
-                <p
-                  className={`text-xl font-bold ${totalSolde >= 0 ? "text-chart-1" : "text-chart-2"}`}
-                >
-                  {totalSolde >= 0 ? "+" : ""}
-                  {totalSolde.toLocaleString("fr-FR")} €
+                <p className={`text-xl font-bold ${totalSolde >= 0 ? "text-chart-1" : "text-chart-2"}`}>
+                  {totalSolde >= 0 ? "+" : ""}{totalSolde.toLocaleString("fr-FR")} €
                 </p>
               </div>
             </div>
@@ -241,16 +327,11 @@ export default function BienDetailPage() {
               </SelectTrigger>
               <SelectContent className="bg-popover border-border">
                 {years.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
+                  <SelectItem key={year} value={year}>{year}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <Button
-              onClick={handleAddTransaction}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-            >
+            <Button onClick={handleAdd} className="bg-primary text-primary-foreground hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
               Ajouter
             </Button>
@@ -262,17 +343,10 @@ export default function BienDetailPage() {
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
                   <TableHead className="text-muted-foreground font-medium">Mois</TableHead>
-                  <TableHead className="text-muted-foreground font-medium text-right">
-                    Entrées
-                  </TableHead>
-                  <TableHead className="text-muted-foreground font-medium text-right">
-                    Sorties
-                  </TableHead>
-                  <TableHead className="text-muted-foreground font-medium text-right">
-                    Solde
-                  </TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-right">Entrées</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-right">Sorties</TableHead>
+                  <TableHead className="text-muted-foreground font-medium text-right">Solde</TableHead>
                   <TableHead className="text-muted-foreground font-medium">Détails</TableHead>
-                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -282,104 +356,53 @@ export default function BienDetailPage() {
                     <TableRow key={index} className="border-border">
                       <TableCell className="font-medium text-foreground">{nomMois}</TableCell>
                       <TableCell className="text-right">
-                        {data.entrees > 0 ? (
-                          <span className="text-chart-1 font-medium">
-                            +{data.entrees.toLocaleString("fr-FR")} €
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
+                        {data.entrees > 0
+                          ? <span className="text-chart-1 font-medium">+{data.entrees.toLocaleString("fr-FR")} €</span>
+                          : <span className="text-muted-foreground">-</span>}
                       </TableCell>
                       <TableCell className="text-right">
-                        {data.sorties > 0 ? (
-                          <span className="text-chart-2 font-medium">
-                            -{data.sorties.toLocaleString("fr-FR")} €
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
+                        {data.sorties > 0
+                          ? <span className="text-chart-2 font-medium">-{data.sorties.toLocaleString("fr-FR")} €</span>
+                          : <span className="text-muted-foreground">-</span>}
                       </TableCell>
                       <TableCell className="text-right">
-                        {data.entrees > 0 || data.sorties > 0 ? (
-                          <span
-                            className={`font-semibold ${
-                              data.solde >= 0 ? "text-chart-1" : "text-chart-2"
-                            }`}
-                          >
-                            {data.solde >= 0 ? "+" : ""}
-                            {data.solde.toLocaleString("fr-FR")} €
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col gap-0.5">
-                          {data.transactions.length > 0 ? (
-                            data.transactions.map((t, i) => (
-                              <span
-                                key={i}
-                                className={`text-xs ${
-                                  t.type === "entree" ? "text-chart-1" : "text-chart-2"
-                                }`}
-                              >
-                                {t.libelle}: {t.type === "entree" ? "+" : "-"}
-                                {t.montant.toLocaleString("fr-FR")} €
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-xs text-muted-foreground">
-                              Aucune transaction
+                        {data.entrees > 0 || data.sorties > 0
+                          ? <span className={`font-semibold ${data.solde >= 0 ? "text-chart-1" : "text-chart-2"}`}>
+                              {data.solde >= 0 ? "+" : ""}{data.solde.toLocaleString("fr-FR")} €
                             </span>
-                          )}
-                        </div>
+                          : <span className="text-muted-foreground">-</span>}
                       </TableCell>
                       <TableCell>
-                        {data.transactions.length > 0 && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <Pencil className="w-3.5 h-3.5" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-popover border-border">
-                              <DropdownMenuItem
-                                onClick={() => setEditTransactionOpen(true)}
-                                className="cursor-pointer"
-                              >
-                                <Pencil className="w-4 h-4 mr-2" />
-                                Modifier
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => setDeleteDialogOpen(true)}
-                                className="text-destructive focus:text-destructive cursor-pointer"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" />
-                                Supprimer
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
+                        <div className="flex flex-col gap-1">
+                          {data.transactions.length > 0
+                            ? data.transactions.map((t) => (
+                                <div key={t.id} className="flex items-center gap-2 group">
+                                  <span className={`text-xs ${t.type === "entrée" ? "text-chart-1" : "text-chart-2"}`}>
+                                    {t.label}: {t.type === "entrée" ? "+" : "-"}{t.amount.toLocaleString("fr-FR")} €
+                                  </span>
+                                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button onClick={() => handleEdit(t)} className="text-muted-foreground hover:text-foreground">
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                    <button onClick={() => handleDeleteClick(t)} className="text-muted-foreground hover:text-destructive">
+                                      <Trash2 className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                </div>
+                              ))
+                            : <span className="text-xs text-muted-foreground">Aucune transaction</span>}
+                        </div>
                       </TableCell>
                     </TableRow>
                   )
                 })}
-                {/* Total Row */}
                 <TableRow className="border-border bg-muted/30 font-bold">
                   <TableCell className="text-foreground">Total annuel</TableCell>
-                  <TableCell className="text-right text-chart-1">
-                    +{totalEntrees.toLocaleString("fr-FR")} €
+                  <TableCell className="text-right text-chart-1">+{totalEntrees.toLocaleString("fr-FR")} €</TableCell>
+                  <TableCell className="text-right text-chart-2">-{totalSorties.toLocaleString("fr-FR")} €</TableCell>
+                  <TableCell className={`text-right ${totalSolde >= 0 ? "text-chart-1" : "text-chart-2"}`}>
+                    {totalSolde >= 0 ? "+" : ""}{totalSolde.toLocaleString("fr-FR")} €
                   </TableCell>
-                  <TableCell className="text-right text-chart-2">
-                    -{totalSorties.toLocaleString("fr-FR")} €
-                  </TableCell>
-                  <TableCell
-                    className={`text-right ${totalSolde >= 0 ? "text-chart-1" : "text-chart-2"}`}
-                  >
-                    {totalSolde >= 0 ? "+" : ""}
-                    {totalSolde.toLocaleString("fr-FR")} €
-                  </TableCell>
-                  <TableCell></TableCell>
                   <TableCell></TableCell>
                 </TableRow>
               </TableBody>
@@ -388,8 +411,8 @@ export default function BienDetailPage() {
         </CardContent>
       </Card>
 
-      {/* Add Transaction Dialog */}
-      <Dialog open={addTransactionOpen} onOpenChange={setAddTransactionOpen}>
+      {/* Add Dialog */}
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-foreground">Ajouter une transaction</DialogTitle>
@@ -401,90 +424,85 @@ export default function BienDetailPage() {
             <div className="grid grid-cols-2 gap-4">
               <Button
                 type="button"
-                variant={transactionType === "entree" ? "default" : "outline"}
-                onClick={() => setTransactionType("entree")}
-                className={
-                  transactionType === "entree"
-                    ? "bg-chart-1 text-primary-foreground hover:bg-chart-1/90"
-                    : "border-border text-foreground"
-                }
+                variant={formType === "entrée" ? "default" : "outline"}
+                onClick={() => setFormType("entrée")}
+                className={formType === "entrée" ? "bg-chart-1 text-primary-foreground hover:bg-chart-1/90" : "border-border text-foreground"}
               >
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Entrée
               </Button>
               <Button
                 type="button"
-                variant={transactionType === "sortie" ? "default" : "outline"}
-                onClick={() => setTransactionType("sortie")}
-                className={
-                  transactionType === "sortie"
-                    ? "bg-chart-2 text-primary-foreground hover:bg-chart-2/90"
-                    : "border-border text-foreground"
-                }
+                variant={formType === "sortie" ? "default" : "outline"}
+                onClick={() => setFormType("sortie")}
+                className={formType === "sortie" ? "bg-chart-2 text-primary-foreground hover:bg-chart-2/90" : "border-border text-foreground"}
               >
                 <TrendingDown className="w-4 h-4 mr-2" />
                 Sortie
               </Button>
             </div>
-
             <div className="space-y-2">
               <Label className="text-foreground">Mois</Label>
-              <Select value={selectedMois} onValueChange={setSelectedMois}>
+              <Select value={formMois} onValueChange={setFormMois}>
                 <SelectTrigger className="bg-input border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-popover border-border">
                   {mois.map((m, i) => (
-                    <SelectItem key={i} value={i.toString()}>
-                      {m}
-                    </SelectItem>
+                    <SelectItem key={i} value={String(i + 1)}>{m}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
               <Label className="text-foreground">Montant (€)</Label>
               <Input
                 type="number"
                 placeholder="0.00"
-                value={montant}
-                onChange={(e) => setMontant(e.target.value)}
+                value={formMontant}
+                onChange={(e) => setFormMontant(e.target.value)}
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
-
             <div className="space-y-2">
               <Label className="text-foreground">Libellé</Label>
               <Input
                 type="text"
                 placeholder="Ex: Loyer, Charges, Travaux..."
-                value={libelle}
-                onChange={(e) => setLibelle(e.target.value)}
+                value={formLibelle}
+                onChange={(e) => setFormLibelle(e.target.value)}
+                className="bg-input border-border text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-foreground">Catégorie</Label>
+              <Input
+                type="text"
+                placeholder="Ex: Loyer, Charges, Travaux..."
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value)}
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setAddTransactionOpen(false)}
-              className="border-border text-foreground"
-            >
+            <Button variant="outline" onClick={() => setAddOpen(false)} className="border-border text-foreground">
               Annuler
             </Button>
             <Button
-              onClick={() => setAddTransactionOpen(false)}
+              onClick={submitAdd}
+              disabled={!formMontant || !formLibelle || saving}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Ajouter
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Edit Transaction Dialog */}
-      <Dialog open={editTransactionOpen} onOpenChange={setEditTransactionOpen}>
+      {/* Edit Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-foreground">Modifier la transaction</DialogTitle>
@@ -497,8 +515,8 @@ export default function BienDetailPage() {
               <Label className="text-foreground">Montant (€)</Label>
               <Input
                 type="number"
-                placeholder="0.00"
-                defaultValue="2000"
+                value={formMontant}
+                onChange={(e) => setFormMontant(e.target.value)}
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
@@ -506,48 +524,52 @@ export default function BienDetailPage() {
               <Label className="text-foreground">Libellé</Label>
               <Input
                 type="text"
-                placeholder="Ex: Loyer, Charges, Travaux..."
-                defaultValue="Loyer"
+                value={formLibelle}
+                onChange={(e) => setFormLibelle(e.target.value)}
+                className="bg-input border-border text-foreground placeholder:text-muted-foreground"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-foreground">Catégorie</Label>
+              <Input
+                type="text"
+                value={formCategory}
+                onChange={(e) => setFormCategory(e.target.value)}
                 className="bg-input border-border text-foreground placeholder:text-muted-foreground"
               />
             </div>
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setEditTransactionOpen(false)}
-              className="border-border text-foreground"
-            >
+            <Button variant="outline" onClick={() => setEditOpen(false)} className="border-border text-foreground">
               Annuler
             </Button>
             <Button
-              onClick={() => setEditTransactionOpen(false)}
+              onClick={submitEdit}
+              disabled={!formMontant || !formLibelle || saving}
               className="bg-primary text-primary-foreground hover:bg-primary/90"
             >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Enregistrer
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {/* Delete Dialog */}
+      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <DialogContent className="bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-foreground">Supprimer cette transaction ?</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Cette action est irréversible. La transaction sera définitivement supprimée.
+              Cette action est irréversible. La transaction &quot;{selectedTx?.label}&quot; sera définitivement supprimée.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteDialogOpen(false)}
-              className="border-border text-foreground"
-            >
+            <Button variant="outline" onClick={() => setDeleteOpen(false)} className="border-border text-foreground">
               Annuler
             </Button>
-            <Button variant="destructive" onClick={() => setDeleteDialogOpen(false)}>
+            <Button variant="destructive" onClick={submitDelete} disabled={saving}>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
               Supprimer
             </Button>
           </DialogFooter>

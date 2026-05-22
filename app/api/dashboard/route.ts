@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getUserFromRequest } from '@/lib/auth'
-import { getPropertiesByUser } from '@/lib/propertyStore'
+import { getPropertiesByUser, type Property } from '@/lib/propertyStore'
 import { getTransactionsByProperty } from '@/lib/transactionStore'
 
 const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sept', 'Oct', 'Nov', 'Déc']
@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
   const properties = await getPropertiesByUser(user.id)
 
   const allTransactions = (
-    await Promise.all(properties.map(p => getTransactionsByProperty(p.id)))
+    await Promise.all(properties.map((p: Property) => getTransactionsByProperty(p.id)))
   ).flat().filter(t => t.year === year)
 
   // Totaux globaux
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   }))
 
   // Liste des biens avec totaux pour l'année
-  const biens = await Promise.all(properties.map(async p => {
+  const biens = await Promise.all(properties.map(async (p: Property) => {
     const tx = (await getTransactionsByProperty(p.id)).filter(t => t.year === year)
     const totalEntrees = tx.filter(t => t.type === 'entrée').reduce((s, t) => s + t.amount, 0)
     const totalSorties = tx.filter(t => t.type === 'sortie').reduce((s, t) => s + t.amount, 0)

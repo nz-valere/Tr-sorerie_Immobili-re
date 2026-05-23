@@ -115,4 +115,4 @@ jobs:
           script: |
             docker pull nzvalere/treasury:latest
             docker rm -f treasury_app
-            docker-compose up -d
+            docker compose up -d

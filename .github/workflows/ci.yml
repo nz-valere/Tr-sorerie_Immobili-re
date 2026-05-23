@@ -115,4 +115,4 @@ jobs:
           script: |
             docker pull nzvalere/treasury:latest
             cd ~
-            docker compose up -d --force-recreate
+            docker-compose up -d --force-recreate

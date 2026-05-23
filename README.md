@@ -7,12 +7,14 @@ Application Next.js full-stack pour gérer des biens et suivre les entrées/sort
 ### Prérequis
 
 - Node.js 20+
-- `pnpm` recommandé (`npm` fonctionne aussi)
+- `pnpm` recommandé
+- Docker (pour les tests d'intégration)
 
 ### Installation
 
 ```bash
 pnpm install
+npx prisma generate
 ```
 
 ### Variables d'environnement
@@ -20,7 +22,9 @@ pnpm install
 Créer un fichier `.env` à la racine :
 
 ```bash
+DATABASE_URL="postgresql://..."
 JWT_SECRET=change-this-to-a-long-random-value
+DATABASE_URL_TEST="postgresql://postgres:postgres@localhost:5433/treasury_test"
 ```
 
 ### Lancer le projet
@@ -31,6 +35,12 @@ pnpm dev
 
 Puis ouvrir http://localhost:3000.
 
+### Déploiement Docker
+
+```bash
+docker compose up --build
+```
+
 ---
 
 ## Ce qui est en place
@@ -38,7 +48,7 @@ Puis ouvrir http://localhost:3000.
 ### Authentification
 - Inscription (`/register`) et connexion (`/login`)
 - Hash des mots de passe avec `bcryptjs`
-- Token JWT stocké dans `localStorage` (7 jours) — à migrer vers cookies HTTPOnly en production
+- Token JWT stocké dans `localStorage` (7 jours)
 - Redirection post-inscription → `/login`, post-connexion → `/biens`
 - Déconnexion avec nettoyage du `localStorage`
 
@@ -126,14 +136,23 @@ app/
 
 lib/
 ├── auth.ts                     # Vérification JWT
+├── prisma.ts                   # Client Prisma singleton
 ├── userStore.ts                # CRUD utilisateurs
 ├── propertyStore.ts            # CRUD biens
 └── transactionStore.ts         # CRUD transactions + calcul totaux
 
-data/
-├── users.json
-├── properties.json
-└── transactions.json
+prisma/
+├── schema.prisma               # Modèles de données
+└── migrations/                 # Historique des migrations SQL
+
+tests/
+├── api/                        # Tests unitaires des routes API
+├── lib/                        # Tests unitaires des stores et auth
+└── integration/                # Tests d'intégration (vraie DB PostgreSQL)
+
+.github/
+└── workflows/
+    └── ci.yml                  # CI GitHub Actions
 ```
 
 ---
@@ -148,13 +167,56 @@ Transaction { id, property_id, month, year, type: "entrée"|"sortie", amount, la
 
 ---
 
+## Tests
+
+### Tests unitaires (Prisma mocké, pas de DB requise)
+
+```bash
+pnpm test
+```
+
+51 tests couvrant : auth, CRUD biens, CRUD transactions, dashboard, stores, `getUserFromRequest`.
+
+### Tests d'intégration (vraie DB PostgreSQL)
+
+Lancer un PostgreSQL local via Docker :
+
+```bash
+docker run --name treasury-test-db \
+  -e POSTGRES_PASSWORD=postgres \
+  -e POSTGRES_DB=treasury_test \
+  -p 5433:5432 -d postgres:16
+```
+
+Puis :
+
+```bash
+pnpm test:integration
+```
+
+13 tests couvrant les stores sur une vraie base — migrations appliquées automatiquement.
+
+---
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`) se déclenche à chaque push sur `main` :
+
+1. **Unit Tests** — 51 tests sans DB
+2. **Integration Tests** — PostgreSQL Docker lancé automatiquement par GitHub
+3. **Build** — bloqué si les tests échouent
+
+Secrets GitHub requis : `DATABASE_URL`, `JWT_SECRET`.
+
+---
+
 ## Notes techniques
 
 - **Auth** : JWT via `Authorization: Bearer <token>`, token stocké dans `localStorage`. À migrer vers cookies HTTPOnly pour la production.
-- **Stockage** : fichiers JSON dans `data/`. Suffisant pour prototyper, à remplacer par PostgreSQL ou SQLite avec Prisma en production.
+- **Base de données** : PostgreSQL via Prisma + Neon (cloud). Les migrations sont versionnées dans `prisma/migrations/`.
+- **Docker** : image multi-stage optimisée, mode `standalone` Next.js.
 
 ## Prochaines étapes
 
 1. Protection des routes (redirection si non connecté).
 2. Sessions serveur avec cookies HTTPOnly.
-3. Migration vers une vraie base de données.

@@ -25,6 +25,8 @@ RUN pnpm build
 FROM base AS runner
 WORKDIR /app
 
+RUN apk add --no-cache openssl
+
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs

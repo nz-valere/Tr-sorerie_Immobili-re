@@ -114,5 +114,5 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             docker pull nzvalere/treasury:latest
-            cd ~
-            docker-compose up -d --force-recreate
+            docker rm -f treasury_app
+            docker-compose up -d

@@ -204,9 +204,11 @@ GitHub Actions (`.github/workflows/ci.yml`) se déclenche à chaque push sur `ma
 
 1. **Unit Tests** — 51 tests sans DB
 2. **Integration Tests** — PostgreSQL Docker lancé automatiquement par GitHub
-3. **Build** — bloqué si les tests échouent
+3. **Build Docker** — bloqué si les tests échouent
+4. **Push to Docker Hub** — image `nzvalere/treasury:latest` publiée (push sur `main` uniquement)
+5. **Deploy to VPS** — connexion SSH, `docker pull` + `docker compose up -d`
 
-Secrets GitHub requis : `DATABASE_URL`, `JWT_SECRET`.
+Secrets GitHub requis : `DATABASE_URL`, `JWT_SECRET`, `DOCKER_USERNAME`, `DOCKER_PASSWORD`, `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`.
 
 ---
 
